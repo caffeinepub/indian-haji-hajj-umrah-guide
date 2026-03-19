@@ -1,0 +1,84 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0.97 0.01 95;
+    --foreground: 0.22 0 0;
+    --card: 1 0 0;
+    --card-foreground: 0.22 0 0;
+    --popover: 1 0 0;
+    --popover-foreground: 0.22 0 0;
+    --primary: 0.27 0.07 155;
+    --primary-foreground: 0.97 0.01 95;
+    --secondary: 0.93 0.02 95;
+    --secondary-foreground: 0.27 0.07 155;
+    --muted: 0.94 0.01 95;
+    --muted-foreground: 0.5 0.02 155;
+    --accent: 0.72 0.1 75;
+    --accent-foreground: 0.22 0 0;
+    --destructive: 0.55 0.22 27;
+    --destructive-foreground: 1 0 0;
+    --border: 0.88 0.02 95;
+    --input: 0.88 0.02 95;
+    --ring: 0.72 0.1 75;
+    --radius: 0.5rem;
+    --emerald-dark: 0.27 0.07 155;
+    --emerald-deeper: 0.22 0.06 155;
+    --gold: 0.72 0.1 75;
+    --gold-light: 0.82 0.08 75;
+    --sidebar-background: 0.27 0.07 155;
+    --sidebar-foreground: 0.97 0.01 95;
+    --sidebar-primary: 0.72 0.1 75;
+    --sidebar-primary-foreground: 0.22 0 0;
+    --sidebar-accent: 0.22 0.06 155;
+    --sidebar-accent-foreground: 0.97 0.01 95;
+    --sidebar-border: 0.32 0.06 155;
+    --sidebar-ring: 0.72 0.1 75;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: "Playfair Display", serif;
+  }
+}
+
+@layer utilities {
+  .bg-emerald-dark {
+    background-color: oklch(var(--emerald-dark));
+  }
+  .bg-emerald-deeper {
+    background-color: oklch(var(--emerald-deeper));
+  }
+  .bg-gold {
+    background-color: oklch(var(--gold));
+  }
+  .text-gold {
+    color: oklch(var(--gold));
+  }
+  .text-gold-light {
+    color: oklch(var(--gold-light));
+  }
+  .border-gold {
+    border-color: oklch(var(--gold));
+  }
+  .arabic-text {
+    font-family: "Noto Naskh Arabic", "Traditional Arabic", serif;
+    direction: rtl;
+    unicode-bidi: bidi-override;
+  }
+}
