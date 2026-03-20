@@ -1,27 +1,27 @@
 # Indian Haji - Hajj & Umrah Guide
 
 ## Current State
-Voice recording (StepVoiceRecorder) is visible to all users. App has existing admin authorization in backend. Regular users browse/listen without login.
+UmrahGuide.tsx and HajjGuide.tsx have hardcoded step descriptions. Admins can record voice per step. Step text is static.
 
 ## Requested Changes (Diff)
 
 ### Add
-- A simple frontend admin auth context with hardcoded credentials: username `admin`, password `haji786`
-- An "Admin Login" button in the Navbar (top right)
-- A login dialog (modal) with username + password fields
-- Once logged in, show an "Admin" badge in navbar and a logout option
-- `StepVoiceRecorder` component only renders when the user is logged in as admin
+- Admin-only inline text editor on each step (Umrah and Hajj)
+- "Edit Text" button visible only when isAdmin is true
+- Edited text stored in localStorage per step (key: `step_text_umrah_1`, `step_text_hajj_1`, etc.)
+- Displayed custom text replaces or appends below default description for all users
 
 ### Modify
-- Wrap the app in `AdminAuthProvider`
-- In `UmrahGuide`, `HajjGuide`, `DuaLibrary`: check `isAdmin` from context before rendering `<StepVoiceRecorder />`
-- Navbar: show login/logout button
+- UmrahGuide.tsx: show editable text area when admin clicks Edit, save to localStorage, display saved text
+- HajjGuide.tsx: same pattern
 
 ### Remove
-- Nothing removed — regular users can still browse and play audio without login
+- Nothing removed
 
 ## Implementation Plan
-1. Create `src/frontend/src/contexts/AdminAuthContext.tsx` — stores isAdmin in state + sessionStorage, exposes login(username, password)/logout functions
-2. Wrap `<App>` or router root with `<AdminAuthProvider>`
-3. Add Admin Login button + Dialog to Navbar
-4. Gate `<StepVoiceRecorder>` with `isAdmin` in all three guide pages
+1. Create a reusable `StepTextEditor` component that:
+   - Takes stepId, defaultText as props
+   - Reads saved text from localStorage on mount
+   - When isAdmin: shows Edit button, clicking shows textarea + Save/Cancel
+   - Displays saved custom text (if any) or default text to all users
+2. Integrate StepTextEditor into UmrahGuide and HajjGuide step expanded content

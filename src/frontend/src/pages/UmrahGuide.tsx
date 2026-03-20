@@ -1,3 +1,4 @@
+import { StepTextEditor } from "@/components/StepTextEditor";
 import { StepVoiceRecorder } from "@/components/StepVoiceRecorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -107,7 +108,6 @@ function speakText(text: string, lang: string) {
   const speak = () => {
     const voices = window.speechSynthesis.getVoices();
     if (lang === "ar" || lang === "ar-SA") {
-      // Try multiple Arabic voice variants
       const arVoice =
         voices.find((v) => v.lang === "ar-SA") ||
         voices.find((v) => v.lang === "ar-EG") ||
@@ -273,9 +273,10 @@ export default function UmrahGuide() {
                     className="border-t border-border"
                   >
                     <div className="p-5 space-y-5">
-                      <p className="text-foreground leading-relaxed">
-                        {s.description}
-                      </p>
+                      <StepTextEditor
+                        stepId={`umrah_step_${s.step}`}
+                        defaultText={s.description}
+                      />
 
                       {/* Dua */}
                       <div className="bg-emerald-dark/5 border border-emerald-dark/20 rounded-xl p-5">

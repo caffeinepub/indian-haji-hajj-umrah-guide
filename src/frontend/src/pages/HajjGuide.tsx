@@ -1,3 +1,4 @@
+import { StepTextEditor } from "@/components/StepTextEditor";
 import { StepVoiceRecorder } from "@/components/StepVoiceRecorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -307,9 +308,11 @@ export default function HajjGuide() {
                     className="border-t border-border"
                   >
                     <div className="p-5 space-y-4">
-                      <p className="text-foreground leading-relaxed">
-                        {s.description}
-                      </p>
+                      <StepTextEditor
+                        stepId={`hajj_step_${s.step}`}
+                        defaultText={s.description}
+                      />
+
                       <div className="bg-emerald-dark/5 border border-emerald-dark/20 rounded-xl p-5">
                         <div className="flex items-center justify-between mb-3">
                           <span className="text-emerald-dark font-semibold text-sm">
