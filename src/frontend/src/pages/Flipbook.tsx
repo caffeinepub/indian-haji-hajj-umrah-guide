@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Loader2,
   Upload,
+  User,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
@@ -17,14 +18,46 @@ import {
   useIsAdmin,
 } from "../hooks/useQueries";
 
-function FlipbookViewer({ url, name }: { url: string; name: string }) {
+// Static books always available
+const STATIC_BOOKS = [
+  {
+    name: "HAJ-E-TAMATTU (Urdu)",
+    author: "Saleemuddin Siddiqui",
+    language: "Urdu",
+    url: "/assets/uploads/HAJ-E-TAMATTU-URDU-BOOK-_compressed-1.pdf",
+  },
+  {
+    name: "HAJ-E-TAMATTU (Hindi)",
+    author: "Saleemuddin Siddiqui",
+    language: "Hindi",
+    url: "/assets/uploads/HAJ-E-TAMATTU-HINDI-BOOK_compressed-2.pdf",
+  },
+];
+
+function FlipbookViewer({
+  url,
+  name,
+  author,
+}: {
+  url: string;
+  name: string;
+  author?: string;
+}) {
   const [currentPage, setCurrentPage] = useState(1);
   const [direction, setDirection] = useState<"left" | "right">("right");
-  // For PDF rendering we use an iframe
   return (
     <div className="w-full">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-serif text-xl font-bold text-foreground">{name}</h3>
+        <div>
+          <h3 className="font-serif text-xl font-bold text-foreground">
+            {name}
+          </h3>
+          {author && (
+            <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+              <User className="w-3 h-3" /> {author}
+            </p>
+          )}
+        </div>
         <Badge className="bg-gold/20 text-gold border-gold/30">PDF</Badge>
       </div>
 
@@ -103,7 +136,10 @@ export default function Flipbook() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [bookName, setBookName] = useState("");
-  const [activeBook, setActiveBook] = useState<number | null>(null);
+  const [activeBook, setActiveBook] = useState<{
+    type: "static" | "dynamic";
+    index: number;
+  } | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const { data: flipbooks = [], isLoading } = useGetFlipbooks();
@@ -139,6 +175,19 @@ export default function Flipbook() {
       toast.error("Upload failed. Dobara koshish karein.");
       setUploadProgress(0);
     }
+  };
+
+  const getActiveViewer = () => {
+    if (!activeBook) return null;
+    if (activeBook.type === "static") {
+      const book = STATIC_BOOKS[activeBook.index];
+      return (
+        <FlipbookViewer url={book.url} name={book.name} author={book.author} />
+      );
+    }
+    const book = flipbooks[activeBook.index];
+    if (!book) return null;
+    return <FlipbookViewer url={book.url.getDirectURL()} name={book.name} />;
   };
 
   return (
@@ -255,65 +304,112 @@ export default function Flipbook() {
           </Card>
         )}
 
-        {/* Books List */}
+        {/* Static Books */}
+        <div className="mb-10">
+          <h2 className="font-serif text-2xl font-bold text-foreground mb-2">
+            Hamare Publications
+          </h2>
+          <p className="text-muted-foreground text-sm mb-6">
+            Saleemuddin Siddiqui dwara likhi gayi kitabein
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {STATIC_BOOKS.map((book, i) => {
+              const isActive =
+                activeBook?.type === "static" && activeBook.index === i;
+              return (
+                <Card
+                  key={book.name}
+                  className={`cursor-pointer transition-all border-2 hover:shadow-lg ${
+                    isActive
+                      ? "border-gold bg-gold/5 shadow-md"
+                      : "border-border hover:border-gold/40"
+                  }`}
+                  onClick={() => setActiveBook({ type: "static", index: i })}
+                  data-ocid={`flipbook.item.${i + 1}`}
+                >
+                  <CardContent className="p-5 flex items-start gap-4">
+                    <div className="w-12 h-16 bg-emerald-dark rounded-md flex items-center justify-center flex-shrink-0 shadow">
+                      <BookOpen className="w-6 h-6 text-gold" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <Badge
+                        className={`mb-2 text-xs ${
+                          book.language === "Urdu"
+                            ? "bg-emerald-dark/10 text-emerald-dark border-emerald-dark/20"
+                            : "bg-blue-50 text-blue-700 border-blue-200"
+                        }`}
+                      >
+                        {book.language}
+                      </Badge>
+                      <h3 className="font-serif font-bold text-foreground text-base leading-tight mb-1">
+                        {book.name}
+                      </h3>
+                      <p className="text-muted-foreground text-xs flex items-center gap-1">
+                        <User className="w-3 h-3" /> {book.author}
+                      </p>
+                    </div>
+                    {isActive && (
+                      <Badge className="bg-gold text-white border-0 text-xs">
+                        Open
+                      </Badge>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Viewer for static books */}
+        {activeBook?.type === "static" && (
+          <Card className="mb-10">
+            <CardContent className="p-6">{getActiveViewer()}</CardContent>
+          </Card>
+        )}
+
+        {/* Admin-uploaded Books */}
         {isLoading ? (
-          <div className="text-center py-20" data-ocid="flipbook.loading_state">
+          <div className="text-center py-10" data-ocid="flipbook.loading_state">
             <Loader2 className="w-10 h-10 animate-spin mx-auto text-emerald-dark" />
             <p className="text-muted-foreground mt-4">
               Kitabein load ho rahi hain...
             </p>
           </div>
-        ) : flipbooks.length === 0 ? (
-          <div className="text-center py-20" data-ocid="flipbook.empty_state">
-            <BookOpen className="w-16 h-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="font-serif text-xl font-bold text-foreground mb-2">
-              Abhi Koi Kitab Nahi
-            </h3>
-            <p className="text-muted-foreground">
-              {isAdmin
-                ? "Upar se PDF upload karein"
-                : "Admin jald hi kitabein add karenge"}
-            </p>
-          </div>
-        ) : (
+        ) : flipbooks.length > 0 ? (
           <div className="space-y-8">
-            {/* Book Selector */}
             <div>
               <h3 className="font-serif text-xl font-bold text-foreground mb-4">
-                Uplabdh Kitabein
+                Admin ki Uploaded Kitabein
               </h3>
               <div className="flex flex-wrap gap-3">
                 {flipbooks.map((book, i) => (
                   <Button
                     key={book.name}
-                    variant={activeBook === i ? "default" : "outline"}
-                    onClick={() => setActiveBook(i)}
+                    variant={
+                      activeBook?.type === "dynamic" && activeBook.index === i
+                        ? "default"
+                        : "outline"
+                    }
+                    onClick={() => setActiveBook({ type: "dynamic", index: i })}
                     className={
-                      activeBook === i
+                      activeBook?.type === "dynamic" && activeBook.index === i
                         ? "bg-emerald-dark text-white"
                         : "border-emerald-dark text-emerald-dark hover:bg-emerald-dark/5"
                     }
-                    data-ocid={`flipbook.item.${i + 1}`}
+                    data-ocid={`flipbook.item.${STATIC_BOOKS.length + i + 1}`}
                   >
                     <BookOpen className="w-4 h-4 mr-2" /> {book.name}
                   </Button>
                 ))}
               </div>
             </div>
-
-            {/* Active Viewer */}
-            {activeBook !== null && flipbooks[activeBook] && (
+            {activeBook?.type === "dynamic" && (
               <Card>
-                <CardContent className="p-6">
-                  <FlipbookViewer
-                    url={flipbooks[activeBook].url.getDirectURL()}
-                    name={flipbooks[activeBook].name}
-                  />
-                </CardContent>
+                <CardContent className="p-6">{getActiveViewer()}</CardContent>
               </Card>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
