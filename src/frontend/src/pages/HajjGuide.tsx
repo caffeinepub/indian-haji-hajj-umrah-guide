@@ -1,7 +1,9 @@
+import { StepVoiceRecorder } from "@/components/StepVoiceRecorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import {
   CheckCircle2,
   ChevronDown,
@@ -152,14 +154,40 @@ function speakText(text: string, lang: string) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
   utterance.rate = 0.8;
-  window.speechSynthesis.speak(utterance);
+
+  const speak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (lang === "ar" || lang === "ar-SA") {
+      const arVoice =
+        voices.find((v) => v.lang === "ar-SA") ||
+        voices.find((v) => v.lang === "ar-EG") ||
+        voices.find((v) => v.lang.startsWith("ar")) ||
+        null;
+      utterance.lang = arVoice ? arVoice.lang : "ar-SA";
+      if (arVoice) utterance.voice = arVoice;
+      utterance.rate = 0.7;
+    } else {
+      utterance.lang = lang;
+    }
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    speak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => {
+      speak();
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }
 }
 
 export default function HajjGuide() {
   const [completed, setCompleted] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<number | null>(1);
+  const { isAdmin } = useAdminAuth();
 
   const toggleComplete = (step: number) => {
     setCompleted((prev) => {
@@ -290,7 +318,7 @@ export default function HajjGuide() {
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => speakText(s.dua, "ar")}
+                            onClick={() => speakText(s.dua, "ar-SA")}
                             className="border-emerald-dark text-emerald-dark hover:bg-emerald-dark hover:text-white"
                             data-ocid="hajj.button"
                           >
@@ -321,6 +349,12 @@ export default function HajjGuide() {
                           </Button>
                         </div>
                       </div>
+
+                      {/* Voice Recorder — admin only */}
+                      {isAdmin && (
+                        <StepVoiceRecorder stepId={`hajj_step_${s.step}`} />
+                      )}
+
                       <Button
                         onClick={() => toggleComplete(s.step)}
                         className={

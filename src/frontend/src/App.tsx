@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import Footer from "./components/Footer";
 import Navbar from "./components/Navbar";
+import { AdminAuthProvider } from "./contexts/AdminAuthContext";
 import DuaLibrary from "./pages/DuaLibrary";
 import Expert from "./pages/Expert";
 import Flipbook from "./pages/Flipbook";
@@ -80,5 +81,9 @@ declare module "@tanstack/react-router" {
 export { Link };
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AdminAuthProvider>
+      <RouterProvider router={router} />
+    </AdminAuthProvider>
+  );
 }

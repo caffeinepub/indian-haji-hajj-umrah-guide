@@ -1,7 +1,9 @@
+import { StepVoiceRecorder } from "@/components/StepVoiceRecorder";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { BookOpen, Search, Volume2 } from "lucide-react";
 import { motion } from "motion/react";
 import { useMemo, useState } from "react";
@@ -109,14 +111,40 @@ function speakText(text: string, lang: string) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = lang;
   utterance.rate = 0.8;
-  window.speechSynthesis.speak(utterance);
+
+  const speak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    if (lang === "ar" || lang === "ar-SA") {
+      const arVoice =
+        voices.find((v) => v.lang === "ar-SA") ||
+        voices.find((v) => v.lang === "ar-EG") ||
+        voices.find((v) => v.lang.startsWith("ar")) ||
+        null;
+      utterance.lang = arVoice ? arVoice.lang : "ar-SA";
+      if (arVoice) utterance.voice = arVoice;
+      utterance.rate = 0.7;
+    } else {
+      utterance.lang = lang;
+    }
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    speak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => {
+      speak();
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }
 }
 
 export default function DuaLibrary() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "umrah" | "hajj">("all");
+  const { isAdmin } = useAdminAuth();
 
   const filtered = useMemo(() => {
     return duas.filter((d) => {
@@ -250,13 +278,13 @@ export default function DuaLibrary() {
                 <p className="text-muted-foreground text-sm mb-1 italic">
                   {dua.hindi}
                 </p>
-                <p className="text-foreground/70 text-sm mb-5">{dua.meaning}</p>
+                <p className="text-foreground/70 text-sm mb-4">{dua.meaning}</p>
 
-                {/* Buttons */}
-                <div className="flex gap-2">
+                {/* TTS Buttons */}
+                <div className="flex gap-2 mb-4">
                   <Button
                     size="sm"
-                    onClick={() => speakText(dua.arabic, "ar")}
+                    onClick={() => speakText(dua.arabic, "ar-SA")}
                     className="bg-emerald-dark text-white hover:opacity-90 flex-1"
                     data-ocid="duas.button"
                   >
@@ -272,6 +300,9 @@ export default function DuaLibrary() {
                     <Volume2 className="w-4 h-4 mr-1" /> Hindi Suno
                   </Button>
                 </div>
+
+                {/* Voice Recorder — admin only */}
+                {isAdmin && <StepVoiceRecorder stepId={`dua_${dua.id}`} />}
               </motion.div>
             ))}
           </div>
